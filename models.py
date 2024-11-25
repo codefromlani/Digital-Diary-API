@@ -45,7 +45,7 @@ class DiaryEntry(Base):
 
    # Relationships
     user = relationship("User", back_populates="entries")
-    tags = relationship("Tag", secondary="entry_tags", back_populates="entries")
+    tags = relationship("Tag", secondary="entry_tags", back_populates="entries") # Many-to-many
     gratitude_items = relationship("GratitudeItem", back_populates="entry")
 
 
@@ -58,7 +58,7 @@ class Tag(Base):
     entries = relationship("DiaryEntry", secondary="entry_tags", back_populates="tags")
 
 
-class EntryTag(Base):
+class EntryTag(Base): # Junction table
     __tablename__ = "entry_tags"
     entry_id = Column(Integer, ForeignKey("diary_entries.id"), primary_key=True)
     tag_id = Column(Integer, ForeignKey("tags.id"), primary_key=True)
