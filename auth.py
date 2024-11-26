@@ -22,7 +22,10 @@ def authenticate_user(db: Session, username: str, password: str):
     """Authenticate a user"""
     user = db.query(models.User).filter(models.User.username == username).first()
     if not user or not models.verify_password(password, user.hashed_password):
-        return False
+       raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password"
+        )
     return user
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
