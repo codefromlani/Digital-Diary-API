@@ -46,9 +46,9 @@ class GratitudeItemResponse(GratitudeItemBase):
 class DiaryEntryBase(BaseModel):
     title: str = Field(..., min_length=3, max_length=100)
     content: str = Field(..., min_length=10)
-    mood = Optional[MoodEnum] = None
-    tags = Optional[List[str]] = Field(default_factory=list)
-    gratitude_items = Optional[List[str]] = Field(default_factory=list)
+    mood: Optional[MoodEnum] = None
+    tags:  Optional[List[str]] = Field(default_factory=list)
+    gratitude_items: Optional[List[str]] = Field(default_factory=list)
 
 class DiaryEntryCreate(DiaryEntryBase):
     pass
