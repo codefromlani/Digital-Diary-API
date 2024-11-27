@@ -18,3 +18,15 @@ def create_user(db: Session, user: schemas.UserCreate) -> models.User:
     db.commit()
     db.refresh(user_to_create)
     return user_to_create
+
+def create_diary_entry(db: Session, entry: schemas.DiaryEntryCreate, user_id: int) -> models.DiaryEntry:
+    """Create a new diary entry"""
+    db_entry = models.DiaryEntry(
+        user_id=user_id,
+        title=entry.title,
+        content=entry.content,
+        mood=entry.mood
+    )
+    db.add(db_entry)
+    db.commit()
+    db.refresh(db_entry)
