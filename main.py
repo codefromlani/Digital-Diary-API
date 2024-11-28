@@ -38,5 +38,31 @@ async def login_for_access_token(
 @app.post("/users/", response_model=schemas.UserResponse)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     """Create a new user"""
-    created_user = crud.create_user(db=db, user=user)
-    return created_user
+    return crud.create_user(db=db, user=user)
+    
+
+@app.get("/users/me", response_model=schemas.UserResponse)
+def get_user_by_me(
+    db: Session = Depends(get_db),
+    user: models.User = Depends(auth.get_current_user)
+    ):
+    """Get the authenticated user's profile"""
+    return crud.get_user(db=db, user=user)
+
+@app.put("/users/me", response_model=schemas.UserResponse)
+def update_user(
+    updated_data: schemas.UserCreate, 
+    db: Session = Depends(get_db), 
+    user: models.User = Depends(auth.get_current_user)
+    ):
+    """Update current authenticated user's data"""
+    return crud.update_user(db=db, user=user, updated_data=updated_data)
+
+@app.delete("/users/me", response_model=schemas.UserResponse)
+def delete_user(
+    db: Session = Depends(get_db),
+    user: models.User = Depends(auth.get_current_user)  
+):
+    """Delete current authenticated user"""
+    crud.delete_user(db=db, user=user)
+    return {"detail": "User deleted successfully"}
