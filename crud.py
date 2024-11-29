@@ -1,5 +1,6 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
+from typing import List, Optional
 import models
 import schemas
 
@@ -58,10 +59,10 @@ def delete_user(db: Session, user: models.User) -> None:
     db.delete(db_user)
     db.commit()
 
-def create_diary_entry(db: Session, entry: schemas.DiaryEntryCreate, user_id: int) -> models.DiaryEntry:
+def create_diary_entry(db: Session, entry: schemas.DiaryEntryCreate, user: models.User) -> models.DiaryEntry:
     """Create a new diary entry"""
     db_entry = models.DiaryEntry(
-        user_id=user_id,
+        user_id=user.id,
         title=entry.title,
         content=entry.content,
         mood=entry.mood
@@ -69,3 +70,62 @@ def create_diary_entry(db: Session, entry: schemas.DiaryEntryCreate, user_id: in
     db.add(db_entry)
     db.commit()
     db.refresh(db_entry)
+
+    # Add tags in bulk
+    if entry.tags:
+        tags = []
+        for tag_name in entry.tags:
+            tag = db.query(models.Tag).filter(models.Tag.name == tag_name).first()
+            if not tag:
+                tag = models.Tag(name=tag_name)
+                tags.append(tag)
+            # Associate the tag with the diary entry
+            db_entry.tags.append(tag)
+
+        db.add_all(tags)
+        db.commit()
+
+    # Add gratitude items
+    if entry.gratitude_items:
+        gratitude_items = []
+        for item_content in entry.gratitude_items:
+            gratitude_item = models.GratitudeItem(
+                entry_id=db_entry.id,
+                content=item_content
+            )
+            gratitude_items.append(gratitude_item)
+        db.add_all(gratitude_items)
+        db.commit()
+    db.refresh(db_entry)
+
+    return db_entry
+
+def get_diary_entries(
+        db: Session, 
+        user: models.User,
+        skip: int = 0,
+        limit: int = 100
+        ) -> List[models.DiaryEntry]: 
+    """Get all diary entries for a user"""
+    return (
+        db.query(models.DiaryEntry)
+        .filter(models.DiaryEntry.user_id == user.id)
+        .order_by(models.DiaryEntry.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+def get_entry_diary(
+        db:Session, 
+        user: models.User, 
+        entry: models.DiaryEntry
+    ) -> Optional[models.DiaryEntry]:
+    """Get a specific diary entry"""
+    return (
+        db.query(models.DiaryEntry)
+        .filter(
+            models.DiaryEntry.id == entry.id,
+            models.DiaryEntry.user_id == user.id
+        ).first()
+    )

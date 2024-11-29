@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from database import get_db, engine
 from datetime import timedelta
+from typing import List
 import models
 import schemas
 import auth
@@ -66,3 +67,35 @@ def delete_user(
     """Delete current authenticated user"""
     crud.delete_user(db=db, user=user)
     return {"detail": "User deleted successfully"}
+
+@app.post("/entries/", response_model=schemas.DiaryEntryResponse)
+def create_entry(
+    entry: schemas.DiaryEntryCreate, 
+    db: Session = Depends(get_db),
+    user: models.User = Depends(auth.get_current_user)
+    ):
+    """Create a new diary entry"""
+    return crud.create_diary_entry(entry=entry, db=db, user=user)
+
+@app.get("/entries/", response_model=List[schemas.DiaryEntryResponse])
+def get_entries(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(auth.get_current_user)
+):
+    """Get all diary entries for the current user"""
+    entries = crud.get_diary_entries(db=db, user=user, skip=skip, limit=limit)
+    return entries
+
+@app.get("/entry/{entry_id}", response_model=schemas.DiaryEntryResponse)
+def read_entry(
+    entry_id: int,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(auth.get_current_user)
+):
+    """Get a specific diary entry"""
+    entry = crud.get_entry_diary(db=db, entry=entry_id, user=user)
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Entry no found")
+    return entry
