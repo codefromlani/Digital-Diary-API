@@ -95,7 +95,7 @@ def read_entry(
     user: models.User = Depends(auth.get_current_user)
 ):
     """Get a specific diary entry"""
-    entry = crud.get_entry_diary(db=db, entry=entry_id, user=user)
+    entry = crud.get_diary_entry(db=db, entry_id=entry_id, user=user)
     if entry is None:
         raise HTTPException(status_code=404, detail="Entry no found")
     return entry
