@@ -116,16 +116,81 @@ def get_diary_entries(
         .all()
     )
 
-def get_entry_diary(
+def get_diary_entry(
         db:Session, 
-        user: models.User, 
-        entry: models.DiaryEntry
+        entry_id: int,
+        user_id: int
     ) -> Optional[models.DiaryEntry]:
     """Get a specific diary entry"""
     return (
         db.query(models.DiaryEntry)
         .filter(
-            models.DiaryEntry.id == entry.id,
-            models.DiaryEntry.user_id == user.id
+            models.DiaryEntry.id == entry_id,
+            models.DiaryEntry.user_id == user_id
         ).first()
+    )
+
+def update_diary_entry(
+        db: Session,
+        entry_id: int,
+        user_id: int,
+        entry_update: schemas.DiaryEntryCreate
+) -> Optional[models.DiaryEntry]:
+    """Update a diary entry"""
+    db_entry = get_diary_entry(db, entry_id, user_id)
+    if not db_entry:
+        return None
+    
+    # Update basic fields
+    for var, value in vars(entry_update).items():
+        if var not in ["tags", "gratitude_items"]:
+            setattr(db_entry, var, value)
+
+    # Update tags
+    if entry_update.tags is not None:
+        # Clear existing tags
+        db_entry.tags.clear()
+        # Add new tags
+        for tag_name in entry_update.tags:
+            tag = db.query(models.Tag).filter(models.Tag.name == tag_name).first()
+            if not tag:
+                tag = models.Tag(name=tag_name)
+                db.add(tag)
+            db_entry.tags.append(tag)
+
+    # Update gratitude items
+    if entry_update.gratitude_items is not None:
+        # Delete existing gratitude items
+        (
+            db.query(models.GratitudeItem)
+            .filter(models.GratitudeItem.entry_id == entry_id)
+            .delete()
+        )
+        # Add new gratitude items
+        for item_content in entry_update.gratitude_items:
+            gratitude_item = models.GratitudeItem(
+                entry_id=entry_id,
+                content=item_content
+            )
+            db.add(gratitude_item)
+
+    db.commit()
+    db.refresh(db_entry)
+    return db_entry
+
+def delete_diary_entry(
+        db: Session,
+        entry_id: int,
+        user_id: int
+) -> bool:
+    """Delete a diary entry"""
+    db_entry = get_diary_entry(db, entry_id, user_id)
+    if not db_entry:
+        return False
+    
+    # Delete associated gratitude items first
+    (
+         db.query(models.GratitudeItem)
+         .filter(models.GratitudeItem.entry_id == entry_id)
+         .delete()
     )
