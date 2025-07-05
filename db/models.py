@@ -1,9 +1,9 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum
-import enum
-from database import Base
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum, func
 from passlib.context import CryptContext
-from datetime import datetime
 from sqlalchemy.orm import relationship
+import enum
+
+from .database import Base
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -37,11 +37,11 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 class DiaryEntry(Base):
     __tablename__ ="diary_entries"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
-    mood = Column(Enum(MoodEnum), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    mood = Column(Enum(MoodEnum))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
    # Relationships
     user = relationship("User", back_populates="entries")
@@ -67,7 +67,7 @@ class EntryTag(Base): # Junction table
 class GratitudeItem(Base):
     __tablename__ = "gratitude_items"
     id = Column(Integer, primary_key=True, index=True)
-    entry_id = Column(Integer, ForeignKey("diary_entries.id"))
+    entry_id = Column(Integer, ForeignKey("diary_entries.id"), nullable=False)
     content = Column(Text, nullable=False)
 
     # Relationship to entry
