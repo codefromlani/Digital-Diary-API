@@ -13,7 +13,7 @@ from schemas.user import TokenData
 
 
 load_dotenv()
-SECRET_KEY = os.getenv("SECRET_KEY", "fallback_secret_key")
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
