@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import timedelta
 
@@ -15,6 +16,14 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="Digital Diary API",
     description="A simple API for managing your digital diary entries with mood tracking and gratitude lists"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(user_router, prefix="/api")
