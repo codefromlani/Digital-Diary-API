@@ -51,5 +51,6 @@ class DiaryEntryResponse(DiaryEntryBase):
     tags: List[TagResponse] = []
     gratitude_items: List[GratitudeItemResponse] = []
 
-    class Config:  
-        orm_mode = True
+    model_config = ConfigDict(
+        from_attributes=True
+    )
